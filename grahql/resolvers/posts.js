@@ -1,4 +1,4 @@
-import { AuthenticationError } from 'apollo-server'
+import { AuthenticationError, UserInputError } from 'apollo-server'
 import Post from '../../models/Post.js'
 import checkAuth from '../../utils/checkAuth.js'
 
@@ -26,7 +26,7 @@ export default {
     async createPost(parent, { body }, context) {
       const user = checkAuth(context)
 
-      console.log(user)
+      if (body.trim() === '') throw new Error('Post body must not be empty!')
 
       const newPost = new Post({
         body,
@@ -37,6 +37,7 @@ export default {
       const post = await newPost.save()
       return post
     },
+
     async deletePost(parent, { postId }, context) {
       const user = checkAuth(context)
 
@@ -51,6 +52,28 @@ export default {
       } catch (err) {
         throw new Error(err)
       }
+    },
+
+    likePost: async (parent, { postId }, context) => {
+      const { username } = checkAuth(context)
+
+      const post = await Post.findById(postId)
+
+      if (post) {
+        if (post.likes.find(like => like.username === username)) {
+          // Post already liked, Unlike the post
+          post.likes = post.likes.filter(like => like.username !== username)
+          await post.save()
+        } else {
+          // not liked, like post
+          post.likes.push({
+            username,
+            createdAt: new Date().toISOString(),
+          })
+        }
+        await post.save()
+        return post
+      } else throw new UserInputError('post not found')
     },
   },
 }
