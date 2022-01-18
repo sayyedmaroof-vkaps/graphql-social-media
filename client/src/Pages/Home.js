@@ -1,29 +1,26 @@
 import React, { useEffect, useState } from 'react'
-import { useQuery } from '@apollo/client'
-import gql from 'graphql-tag'
+import { useQuery, gql } from '@apollo/client'
+// import gql from 'graphql-tag'
 import { Col, Row } from 'react-bootstrap'
 import Loader from '../components/Loader'
 import PostCard from '../components/PostCard'
 
 const Home = () => {
-  const {
-    loading,
-    data: { getPosts },
-  } = useQuery(FETCH_POSTS_QUERY)
-
-  console.log(getPosts)
+  const { loading, data } = useQuery(FETCH_POSTS_QUERY)
 
   const [posts, setPosts] = useState([])
 
   useEffect(() => {
-    if (!loading) {
-      //   setPosts(getPosts)
+    if (data) {
+      setPosts(data.getPosts)
     }
-  }, [])
+  }, [data])
+
+  console.log(posts)
 
   return (
     <div>
-      <h1>This is home page</h1>
+      <h1>Recent Posts</h1>
       {loading ? (
         <Loader />
       ) : (
@@ -32,7 +29,6 @@ const Home = () => {
             {posts.map(post => (
               <Col key={post.id} md={6} sm={6} lg={4} xl={3}>
                 <PostCard post={post} />
-                <h4>body</h4>
               </Col>
             ))}
           </Row>
@@ -49,6 +45,7 @@ const FETCH_POSTS_QUERY = gql`
       body
       username
       likeCount
+      createdAt
       likes {
         username
       }
